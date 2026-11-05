@@ -1,0 +1,759 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Life OS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=Kalam:wght@400;700&display=swap">
+<style>
+/* Layout: bitta telefon ustuni; yuqorida kun "smenasi", o'rtada ekran, pastda sinov paneli */
+:root {
+  --bg: #eef0f5;
+  --surface: #ffffff;
+  --ink: #161a2b;
+  --muted: #5d6479;
+  --line: #d5d9e4;
+  --lamp: #c7780a;        /* tungi do'kon chirog'i — yagona urg'u */
+  --lamp-soft: #fbefd9;
+  --ok: #1f7a4d;
+  --ok-soft: #dff1e7;
+  --lock: #8a4b0b;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1220; --surface: #181c2e; --ink: #e7e9f2; --muted: #9399b0; --line: #2a3048;
+  --lamp: #f0a73a; --lamp-soft: #33270f; --ok: #5fd39a; --ok-soft: #12301f; --lock: #f0b35a;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1220; --surface: #181c2e; --ink: #e7e9f2; --muted: #9399b0; --line: #2a3048;
+  --lamp: #f0a73a; --lamp-soft: #33270f; --ok: #5fd39a; --ok-soft: #12301f; --lock: #f0b35a;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px }
+.app { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px }
+h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em }
+h1 { font-size: 1.5rem; font-weight: 800; line-height: 1.2 }
+h2 { font-size: 1.1rem; font-weight: 600 }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums }
+.muted { color: var(--muted) }
+.eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600 }
+
+.clock { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap }
+.clock .time { font-size: 1.6rem; font-weight: 600 }
+
+/* Mantiqiy kun chizig'i: 16:00 dan 16:00 gacha, Deep Work oynasi belgilangan */
+.dayline { position: relative; height: 34px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); overflow: hidden }
+.dayline .seg { position: absolute; top: 0; bottom: 0 }
+.dayline .shift { background: var(--lamp-soft) }
+.dayline .deep { background: var(--lamp); opacity: 0.55 }
+.dayline .now { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink) }
+.ticks { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 4px }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); margin-top: 6px }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+
+.state { padding: 12px 14px; border-radius: 10px; font-weight: 600 }
+.state.locked { background: var(--lamp-soft); color: var(--lock) }
+.state.open { background: var(--ok-soft); color: var(--ok) }
+
+.streak { display: flex; gap: 24px; align-items: baseline }
+.streak .n { font-family: var(--display); font-size: 3rem; font-weight: 800; line-height: 1 }
+.chain { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap }
+.chain span { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line) }
+.chain span.on { background: var(--lamp); border-color: var(--lamp) }
+
+.habits { display: flex; flex-direction: column; gap: 10px }
+.habit { display: flex; gap: 14px; align-items: center; width: 100%; text-align: left; padding: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); font: inherit; cursor: pointer }
+.habit:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px }
+.habit .box { flex: none; width: 26px; height: 26px; border-radius: 7px; border: 2px solid var(--muted); display: grid; place-items: center; font-weight: 700; color: var(--surface) }
+.habit[aria-pressed="true"] { border-color: var(--ok) }
+.habit[aria-pressed="true"] .box { background: var(--ok); border-color: var(--ok) }
+.habit .name { font-weight: 600 }
+.habit .desc { font-size: 0.85rem; color: var(--muted) }
+.habit[disabled] { cursor: default }
+
+.progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden }
+.progress div { height: 100%; background: var(--ok); transition: width .25s }
+
+.actions { display: flex; flex-direction: column; gap: 8px }
+.btn { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 12px;
+  font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer }
+.btn.primary { background: var(--lamp); border-color: var(--lamp); color: #1a1205 }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed }
+.btn small { font-weight: 400; font-size: 0.75rem }
+
+details.test { border: 1px dashed var(--line); border-radius: 12px; padding: 12px 14px; background: var(--surface) }
+details.test summary { cursor: pointer; font-weight: 600 }
+.test .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px }
+.test .row button { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 0.85rem; cursor: pointer }
+.test .row button.danger { color: var(--lock) }
+.tablewrap { overflow-x: auto; margin-top: 10px }
+table { border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; width: 100% }
+th, td { border-bottom: 1px solid var(--line); padding: 4px 8px; text-align: left; white-space: nowrap }
+th { color: var(--muted); font-weight: 600 }
+
+.timer { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 4.5rem; font-weight: 600; text-align: center; line-height: 1; padding-block: 24px 8px }
+.dwbox { display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line) }
+.dwbox input[type=range] { width: 100%; accent-color: var(--lamp) }
+.center { text-align: center }
+.pcard.hot { border-color: var(--lamp); background: var(--lamp-soft) }
+.pcard .big { font-family: var(--display); font-size: 1.8rem; font-weight: 800; line-height: 1.1 }
+.chk { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem }
+.chk label { display: flex; gap: 6px; align-items: center; cursor: pointer }
+.chk input { width: 18px; height: 18px; accent-color: var(--lamp) }
+.task { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer }
+.task input { width: 20px; height: 20px; accent-color: var(--ok); flex: none }
+.task .t { flex: 1; min-width: 0 }
+.task.done .t { text-decoration: line-through; color: var(--muted) }
+.qtag { font-family: var(--mono); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap }
+textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100%; min-height: 90px; resize: vertical }
+.grid4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+.pcard { padding: 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); min-width: 0 }
+.pcard .v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; overflow-wrap: anywhere }
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: var(--muted); min-width: 0 }
+.form input, .form select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100% }
+.form input:focus-visible, .form select:focus-visible { outline: 2px solid var(--lamp); outline-offset: 1px }
+.err { color: var(--lock); font-size: 0.85rem; min-height: 1.2em }
+.entry { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line) }
+.entry .t { flex: 1; min-width: 0; font-size: 0.85rem }
+.entry .a { font-family: var(--mono); font-weight: 600; white-space: nowrap }
+.entry button { border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 6px; padding: 4px 8px; cursor: pointer; font: inherit; font-size: 0.75rem }
+.field { gap: 12px }
+.field label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; min-width: 0 }
+.field input, .field select { font: inherit; font-weight: 400; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100% }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--lamp); outline-offset: 1px }
+.field .toggle { flex-direction: row; align-items: center; gap: 10px }
+.field .toggle input { width: 20px; height: 20px; accent-color: var(--lamp) }
+.tsel { display: flex; align-items: center; gap: 6px }
+.tsel select { flex: 1; font-family: var(--mono); font-size: 1.1rem; text-align: center }
+:root { --radius: 12px }
+.habit, .btn, .dwbox, .pcard, .next, details.test, .state { border-radius: var(--radius) }
+.unlock { padding: 16px; border-radius: var(--radius); background: var(--ok-soft); color: var(--ok); font-family: var(--display); font-size: 1.2rem; font-weight: 800; animation: pop .5s ease-out }
+@keyframes pop { from { transform: scale(.94); opacity: .5 } to { transform: none; opacity: 1 } }
+.rec { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; background: var(--lamp); color: #1a1205; font-size: .72rem; font-weight: 600; animation: pop .5s ease-out }
+.ring { position: relative; width: min(260px, 80vw); max-width: 100%; aspect-ratio: 1; margin: 8px auto }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg) }
+.ring circle { fill: none; stroke-width: 8 }
+.ring .trk { stroke: var(--line) }
+.ring .arc { stroke: var(--lamp); stroke-linecap: round; stroke-dasharray: 691.15; transition: stroke-dashoffset 1s linear }
+.ring .timer { position: absolute; inset: 0; display: grid; place-items: center; padding: 0; font-size: 3rem }
+@media (prefers-reduced-motion: reduce) { .unlock, .rec { animation: none } .ring .arc { transition: none } }
+.tl { display: flex; flex-direction: column; gap: 6px }
+.tl-track { position: relative; touch-action: none; cursor: ew-resize; height: 56px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); margin-top: 18px }
+.blk { position: absolute; top: 6px; bottom: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; pointer-events: none; min-width: 18px; user-select: none; -webkit-user-select: none }
+.blk-work { background: var(--lamp-soft); border: 1px solid var(--lamp) }
+.blk-deep { background: var(--lamp); color: #1a1205; z-index: 2 }
+.blk .bl { font-size: .72rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-inline: 12px; pointer-events: none }
+.blk .h { position: absolute; top: 0; bottom: 0; width: 14px; cursor: ew-resize }
+.blk .h::after { content: ""; position: absolute; top: 30%; bottom: 30%; left: 6px; width: 2px; border-radius: 1px; background: currentColor; opacity: .45 }
+.blk-work .h::after { background: var(--lamp) }
+.blk .h.l { left: 0 } .blk .h.r { right: 0 }
+.blk.drag { cursor: grabbing; box-shadow: 0 4px 14px rgb(0 0 0 / .18); outline: 2px solid var(--ink); outline-offset: 1px }
+.tl-track .now { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); z-index: 3; pointer-events: none }
+.tl-track .now span { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: .68rem; background: var(--ink); color: var(--bg); padding: 1px 5px; border-radius: 4px; margin-bottom: 2px }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+.sw.work { background: var(--lamp-soft); border: 1px solid var(--lamp) } .sw.deep { background: var(--lamp) }
+.tl-track .now.scrub { width: 3px; background: var(--lamp) }
+.tl-track .now.scrub span { background: var(--lamp); color: #1a1205; font-weight: 600 }
+.tl-status { font-size: .85rem; font-weight: 600; color: var(--lock) }
+.dayline .past { position: absolute; top: 0; bottom: 0; left: 0; background: var(--ink); opacity: .06; transition: width 1s linear; pointer-events: none }
+.dayline .now { transition: left 1s linear; z-index: 2 }
+.dayline .pulse { position: absolute; top: -5px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--lamp); animation: pulse 2s ease-out infinite }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--lamp) } 70% { box-shadow: 0 0 0 8px transparent } 100% { box-shadow: 0 0 0 0 transparent } }
+.dayline .seg.active { animation: glow 2.4s ease-in-out infinite }
+@keyframes glow { 50% { filter: brightness(1.12) saturate(1.3) } }
+.dayline.intro .seg { transform-origin: left; animation: grow .7s cubic-bezier(.2,.8,.2,1) both }
+.dayline.intro .seg.deep { animation-delay: .15s }
+@keyframes grow { from { transform: scaleX(0) } }
+.dayline { overflow: visible }
+@media (prefers-reduced-motion: reduce) { .dayline .pulse, .dayline .seg.active, .dayline.intro .seg { animation: none } .dayline .now, .dayline .past { transition: none } }
+.streakline { font-family: var(--display); font-size: 1.3rem; font-weight: 800 }
+.habit .cue { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--lamp); font-weight: 600 }
+.dayline .seg.sleep { background: repeating-linear-gradient(135deg, var(--line) 0 4px, transparent 4px 8px) }
+.legend .slp { background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px) }
+.idea, .coach { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line) }
+.coach { border-color: var(--ok); gap: 6px }
+.coach .nav { margin-top: 6px }
+.laws { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; font-size: .9rem }
+.chips.days label { flex-direction: row; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; font-weight: 400; font-size: .85rem; cursor: pointer }
+.chips.days input { width: 16px; height: 16px; accent-color: var(--lamp) }
+.chain span.rest { border-style: dashed; background: none }
+.hint { margin: 0; font-size: 0.82rem; color: var(--muted) }
+.list { display: flex; flex-direction: column; gap: 8px }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 6px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chips button { font: inherit; font-size: 0.85rem; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer }
+.dots { display: flex; gap: 6px }
+.dots span { flex: 1; height: 4px; border-radius: 2px; background: var(--line) }
+.dots span.on { background: var(--lamp) }
+.nav { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; position: sticky; bottom: 0; padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg) }
+.next { display: flex; flex-direction: column; gap: 6px; padding: 18px; border-radius: 14px; background: var(--lamp-soft); border: 1px solid var(--lamp) }
+.next .big { font-family: var(--display); font-size: 1.35rem; font-weight: 800; line-height: 1.2 }
+.next .btn { margin-top: 6px }
+.goals { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-left: 3px solid var(--lamp); background: var(--surface) }
+@media (prefers-reduced-motion: reduce) { .progress div { transition: none } }
+
+/* === Daftar dizayni === */
+:root{--bg:#f2f0eb;--surface:#f7f5f0;--ink:#1d1d1b;--muted:#55524c;--line:#d3cfc6;--lamp:#d4f25a;--lamp-soft:#eef7c4;--ok:#2448c8;--ok-soft:#e5eafa;--lock:#a3402f;color-scheme:light;--pen:#2448c8;--hand:"Kalam","Segoe Print",cursive}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#f2f0eb;--surface:#f7f5f0;--ink:#1d1d1b;--muted:#55524c;--line:#d3cfc6;--lamp:#d4f25a;--lamp-soft:#eef7c4;--ok:#2448c8;--ok-soft:#e5eafa;--lock:#a3402f;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#f2f0eb;--surface:#f7f5f0;--ink:#1d1d1b;--muted:#55524c;--line:#d3cfc6;--lamp:#d4f25a;--lamp-soft:#eef7c4;--ok:#2448c8;--ok-soft:#e5eafa;--lock:#a3402f;color-scheme:light}
+body::before{content:"";position:fixed;left:10px;top:0;bottom:0;width:1.5px;background:#e2a69c;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;padding-bottom:72px}
+.eyebrow{text-transform:none;letter-spacing:0;font-size:.85rem;font-weight:500}
+.btn{background:var(--surface);border-color:var(--line)}
+.btn.primary{background:var(--lamp);border-color:var(--ink);color:var(--ink)}
+.next{background:var(--lamp-soft);border-color:var(--ink)}
+.state.locked{background:#f6e3dd}
+.unlock{font-family:var(--hand);font-weight:700}
+.habits{gap:0;border-top:1.5px solid var(--ink)}
+.habit,.habit[aria-pressed="true"]{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:12px 0}
+.habit .box,.habit[aria-pressed="true"] .box{background:none;border:1.6px solid var(--ink);border-radius:3px;transform:rotate(-3deg);width:26px;height:26px;overflow:visible}
+.habit .box svg{width:30px;height:30px;margin:-6px 0 0 4px}
+.habit .cue{color:var(--pen);text-transform:none;letter-spacing:0;font-family:var(--hand);font-size:.95rem;font-weight:400}
+.habit .tally{display:block;margin-top:2px}
+.chain span{width:16px;height:16px;border-radius:50%}
+.chain span.on{background:var(--lamp);border-color:var(--ink)}
+.dayline,.tl-track{border-radius:4px}
+.dayline .deep,.blk-deep{background:var(--pen);color:#fff}
+.dayline .deep{opacity:.35}
+.ring .arc{stroke:var(--pen)}
+.goals{border-left:0;background:none;padding:0;font-family:var(--hand);color:var(--pen);font-size:1.1rem}
+.goals .eyebrow{font-family:var(--body)}
+.hero .facts{font-family:var(--display);font-size:2.7rem;font-weight:800;line-height:1.1;letter-spacing:-.03em}
+.hero .facts .sep{color:#9a958c;font-weight:500}
+.mk{background:linear-gradient(transparent 58%,var(--lamp) 58%,var(--lamp) 92%,transparent 92%)}
+.hero .who{font-family:var(--hand);color:var(--pen);font-size:1.15rem;margin-top:2px}
+.hero svg{display:block;width:100%;height:auto;margin-top:6px}
+.actions{display:none}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:center;background:var(--bg);border-top:1.5px solid var(--ink);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+.bnav div{display:flex;width:100%;max-width:440px}
+.bnav button{flex:1;min-width:0;min-height:48px;background:none;border:0;font:inherit;font-size:.78rem;white-space:nowrap;padding:0 2px;font-weight:600;color:var(--muted);cursor:pointer}
+.bnav button.on{color:var(--ink)}
+.bnav button.on span{background:linear-gradient(transparent 50%,var(--lamp) 50%);padding:0 4px}
+.habit.fresh .box svg path{stroke-dasharray:40;stroke-dashoffset:40;animation:pen .32s cubic-bezier(.3,.7,.3,1) forwards}
+.habit.fresh .box{animation:tick .32s ease-out}
+.habit.fresh .tally path{animation:fadein .4s ease-out}
+@keyframes pen{to{stroke-dashoffset:0}}
+@keyframes tick{40%{transform:rotate(-3deg) scale(1.12)}}
+@keyframes fadein{from{stroke-opacity:0}}
+@media (prefers-reduced-motion:reduce){.habit.fresh .box svg path,.habit.fresh .box,.habit.fresh .tally path{animation:none;stroke-dashoffset:0}}
+</style>
+
+<div class="app" id="app"></div>
+
+<script>
+/* ===== Sozlamalar: hammasini foydalanuvchi tanlaydi ===== */
+const KEY = "lifeos.v2";
+const WEEKDAYS = ["Yakshanba","Dushanba","Seshanba","Chorshanba","Payshanba","Juma","Shanba"];
+const SUGGEST = [["Kitob o'qish", "1 bet"], ["Sport", "5 daqiqa"], ["Til o'rganish", "3 so'z"], ["Meditatsiya", "2 daqiqa"], ["Kundalik yozish", "1 jumla"]];
+// Bo'sh maydonlardagi xira namunalar
+const EXH = [["Kitob o'qish", "1 bet"], ["Sport", "5 daqiqa"], ["Til o'rganish", "3 so'z"]];
+const DEFAULTS = {
+  name: "", dayStart: "07:00",
+  habits: [{ name: "", desc: "" }, { name: "", desc: "" }, { name: "", desc: "" }],
+  goals: ["", "", ""],
+  work: { on: false, start: "09:00", end: "18:00" },
+  deep: { topic: "", start: "20:00", end: "21:30", minutes: 60 },
+  reviewDay: 0,
+  rest: { mode: "none", days: [6], every: 3, monthDay: 1, anchor: "" },
+};
+
+let state = { logs: [], offsetMin: 0, sessions: [], tasks: [], reviews: {}, settings: null };
+try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && Array.isArray(s.logs)) state = { ...state, ...s }; } catch (e) {}
+state.offsetMin = 0;     // sinov siljishi saqlanmaydi
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+const S = () => state.settings;
+
+/* ===== Vaqt (logic/time_utils.py) ===== */
+const hm = t => { const [h, m] = String(t || "0:0").split(":").map(Number); return (h || 0) * 60 + (m || 0); };
+function nowLocal() { return new Date(Date.now() + state.offsetMin * 60000 - new Date().getTimezoneOffset() * 60000); }
+const iso = d => d.toISOString().slice(0, 10);
+// Mantiqiy kun: vaqtdan "kun boshlanish soati"ni ayirib, sanasini olamiz
+const logicalDate = (local = nowLocal()) => iso(new Date(local.getTime() - hm(S().dayStart) * 60000));
+function addDays(s, n) { const d = new Date(s + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return iso(d); }
+const wdOf = d => new Date(d + "T00:00:00Z").getUTCDay();
+const pad = n => String(n).padStart(2, "0");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avgust","sentabr","oktabr","noyabr","dekabr"];
+const short = d => `${Number(d.slice(8))}-${MONTHS[Number(d.slice(5, 7)) - 1]}`;
+const human = d => `${short(d)}, ${WEEKDAYS[wdOf(d)].toLowerCase()}`;
+const fmtMin = n => n >= 60 ? `${Math.floor(n / 60)} soat ${n % 60} daq` : `${n} daq`;
+
+/* ===== Odatlar (logic/habits.py) =====
+   Har odatda since/until bor: o'zgarish ERTADAN kuchga kiradi.
+   Aks holda odatni o'chirib qulfni "ochish" yoki yangisini qo'shib o'tgan zanjirni buzish mumkin bo'lardi. */
+// Dam olish kuni: odatlar majburiy emas, zanjir uzilmaydi (bu kun hisobga olinmaydi)
+function isRest(d) {
+  const r = S() && S().rest; if (!r || r.mode === "none") return false;
+  if (r.mode === "week") return (r.days || []).includes(wdOf(d));
+  if (r.mode === "month") return Number(d.slice(8)) === r.monthDay;
+  if (r.mode === "every") { const diff = Math.round((Date.parse(d) - Date.parse(r.anchor || d)) / 864e5); return diff > 0 && diff % r.every === 0; }
+  return false;
+}
+const prevWork = d => { let p = addDays(d, -1); for (let i = 0; i < 30 && isRest(p); i++) p = addDays(p, -1); return p; };
+const requiredOn = d => isRest(d) ? [] : S().habits.filter(h => (!h.since || h.since <= d) && (!h.until || d <= h.until));
+const isDone = (id, d) => state.logs.some(l => l.habit_id === id && l.logical_date === d);
+const todayHabits = d => requiredOn(d).map(h => ({ ...h, done: isDone(h.id, d) }));
+const isUnlocked = d => { if (isRest(d)) return true; const h = todayHabits(d); return h.length > 0 && h.every(x => x.done); };
+function markDone(id, d) { if (!isDone(id, d)) state.logs.push({ habit_id: id, logical_date: d }); save(); }
+function unmark(id, d) { state.logs = state.logs.filter(l => !(l.habit_id === id && l.logical_date === d)); save(); }
+function fullDays() {
+  const days = new Set(state.logs.map(l => l.logical_date));
+  return new Set([...days].filter(d => { const r = requiredOn(d); return r.length && r.every(h => isDone(h.id, d)); }));
+}
+// "Ikki marta qoldirma": bitta qoldirilgan kun zanjirni uzmaydi, ketma-ket ikkitasi uzadi
+function streakFrom(f, c) { let n = 0, gap = false; for (let g = 0; g < 4000; g++) { if (isRest(c)) { c = addDays(c, -1); continue; } if (f.has(c)) { n++; gap = false; } else if (!gap && f.has(prevWork(c))) gap = true; else break; c = addDays(c, -1); } return n; }
+function currentStreak(d) { const f = fullDays(); return streakFrom(f, f.has(d) ? d : addDays(d, -1)); }
+const missedYesterday = d => { const f = fullDays(); return f.size > 0 && !f.has(prevWork(d)) && currentStreak(d) > 0; };
+function bestStreak() { const f = fullDays(); let best = 0; f.forEach(d => { best = Math.max(best, streakFrom(f, d)); }); return best; }
+
+/* ===== Deep Work (logic/deepwork.py) ===== */
+const virtNow = () => Date.now() + state.offsetMin * 60000;
+const runningSession = () => state.sessions.find(s => s.status === "running") || null;
+const remainingSec = s => Math.max(0, s.planned * 60 - Math.floor((virtNow() - s.startedAt) / 1000));
+function startSession(planned) { if (runningSession()) return; state.sessions.push({ id: Date.now(), logical_date: logicalDate(), topic: S().deep.topic, planned, startedAt: virtNow(), status: "running", actual: null }); save(); }
+function finishSession(s, completed) { if (s.status !== "running") return; s.actual = Math.min(Math.floor((virtNow() - s.startedAt) / 60000), s.planned); s.status = completed ? "completed" : "aborted"; save(); }
+const dwMinutes = (a, b) => state.sessions.filter(s => s.logical_date >= a && s.logical_date <= b).reduce((t, s) => t + (s.actual || 0), 0);
+
+/* ===== Vazifalar va haftalik xulosa ===== */
+const quadrant = (imp, urg) => imp ? (urg ? 1 : 2) : (urg ? 3 : 4);
+const weekRange = d => { const back = (wdOf(d) - (S().reviewDay + 1) + 7) % 7; const s = addDays(d, -back); return [s, addDays(s, 6)]; };
+
+/* ===== Umumiy bloklar ===== */
+const $app = document.getElementById("app");
+let justUnlocked = false, view = "home", sessionOpen = false, wipeArmed = false, tkError = "", rvSaved = false, obStep = 0, draft = null, setMsg = "";
+
+// Kun chizig'i (eski ko'rinish) + jonlilik: "hozir" chizig'i silliq siljiydi va tepadagi nuqta urib turadi,
+// hozir ichida turgan blok yorishib turadi, o'tgan qism xira bo'ladi.
+let drag = null, dlIntro = true;
+const hmStr = m => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return `${pad(Math.floor(x / 60))}:${pad(x % 60)}`; };
+const dlPct = (m, ds) => ((m - ds + 1440) % 1440) / 1440 * 100;
+function nowMin() { const l = nowLocal(); return l.getUTCHours() * 60 + l.getUTCMinutes() + l.getUTCSeconds() / 60; }
+function dayline(local) {
+  const ds = hm(S().dayStart), w = S().work, dp = S().deep, now = nowMin(), np = dlPct(now, ds);
+  const inR = (a, b) => { a = hm(a); b = hm(b); return a <= b ? now >= a && now < b : now >= a || now < b; };
+  const seg = (cls, a, b) => {
+    const x = dlPct(hm(a), ds), y = dlPct(hm(b), ds), act = inR(a, b) ? " active" : "";
+    const one = (l, wd) => `<div class="seg ${cls}${act}" style="left:${l}%;width:${wd}%"></div>`;
+    return y >= x ? one(x, y - x) : one(x, 100 - x) + one(0, y);
+  };
+  const ticks = [0, 12, 24].map(h => { const m = (ds + h * 60) % 1440; return `<span>${pad(Math.floor(m / 60))}:${pad(m % 60)}</span>`; }).join("");
+  const intro = dlIntro ? " intro" : ""; dlIntro = false;   // o'sish animatsiyasi faqat birinchi ochilishda
+  return `<div>
+    <div class="dayline${intro}" role="img" aria-label="Kun chizig'i">${seg("sleep", hmStr(ds - 480), S().dayStart)}${w.on ? seg("shift", w.start, w.end) : ""}${seg("deep", dp.start, dp.end)}
+      <div class="past" style="width:${np}%"></div>
+      <div class="now" style="left:${np}%"><i class="pulse"></i></div></div>
+    <div class="ticks mono">${ticks}</div>
+    <div class="legend"><span><i class="slp"></i>Uyqu ${hmStr(ds - 480)}–${S().dayStart}</span>${w.on ? `<span><i style="background:var(--lamp-soft)"></i>Ish ${w.start}–${w.end}</span>` : ""}<span><i style="background:var(--lamp);opacity:.55"></i>${esc(dp.topic || "Chuqur ish")} ${dp.start}–${dp.end}</span></div>
+  </div>`;
+}
+// Har soniyada faqat chiziqni siljitamiz (butun ekranni qayta chizmasdan)
+setInterval(() => {
+  if (!S()) return;
+  const np = dlPct(nowMin(), hm(S().dayStart));
+  document.querySelectorAll(".dayline .now").forEach(n => n.style.left = `${np}%`);
+  document.querySelectorAll(".dayline .past").forEach(p => p.style.width = `${np}%`);
+}, 1000);
+
+function header(day, local) {
+  return `<div class="clock">
+      <div><div class="eyebrow">Bugungi kun</div><div>${human(day)}</div></div>
+      <div class="time mono">${pad(local.getUTCHours())}:${pad(local.getUTCMinutes())}${state.offsetMin ? ` <span class="qtag" style="color:var(--lock)">sinov +${Math.round(state.offsetMin / 60)} soat</span>` : ""}</div>
+    </div>${dayline(local)}`;
+}
+function streakBlock(day) {
+  const f = fullDays(), cur = currentStreak(day); let chain = "";
+  for (let i = 13; i >= 0; i--) { const d = addDays(day, -i); chain += `<span class="${f.has(d) ? "on" : isRest(d) ? "rest" : ""}" title="${short(d)}${isRest(d) ? " · dam olish" : ""}"></span>`; }
+  const rec = cur > 1 && cur === bestStreak();
+  return `<div><div class="eyebrow">Zanjir</div><div class="streakline">${cur ? `${cur} kun ketma-ket` : "Zanjir bugun boshlanadi"}${rec ? ' <span class="rec">Yangi rekord</span>' : ""}</div>
+    <div class="chain" aria-label="So'nggi 14 kun">${chain}</div></div>`;
+}
+const habitButtons = (day, editable) => todayHabits(day).map((h, i, a) => `
+  <button class="habit${h.id === freshId ? " fresh" : ""}" data-id="${h.id}" aria-pressed="${h.done}" ${editable ? "" : "disabled"}>
+    <span class="box">${h.done ? '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3 12 Q6 15 8 19 Q13 9 23 2" fill="none" stroke="#2448c8" stroke-width="2.6" stroke-linecap="round"/></svg>' : ""}</span>
+    <span><span class="cue">${i ? esc(a[i - 1].name) + "dan keyin" : "Uyg'ongach"}</span><br><span class="name">${esc(h.name)}</span>${h.desc ? `<br><span class="desc">Kamida: ${esc(h.desc)}</span>` : ""}${tally(state.logs.filter(l => l.habit_id === h.id && l.logical_date.slice(0, 7) === day.slice(0, 7)).length)}</span>
+  </button>`).join("");
+const goalsBlock = () => { const g = S().goals.filter(Boolean); return g.length ? `<div class="goals"><div class="eyebrow">Men shunday odam bo'lyapman</div>${g.map(x => `<div>→ ${esc(x)}</div>`).join("")}</div>` : ""; };
+const back = "";
+// Kundalik foydalanishda chalg'itmasligi uchun faqat Sozlamalar ichida
+function testPanel() {
+  if (view !== "set") return "";
+  return `<details class="test" id="testpanel" ${sessionOpen ? "open" : ""}>
+    <summary>Sinov paneli</summary>
+    <p class="muted" style="margin:8px 0 0">Soatni siljitib, kun chegarasi va zanjirni tekshiring.</p>
+    <div class="row">
+      <button data-shift="60">+1 soat</button><button data-shift="360">+6 soat</button><button data-shift="1440">+1 kun</button>
+      <button data-shift="reset">Real vaqt</button><button data-act="fill">Kechagi 3 kunni to'ldirish</button>
+      <button data-act="wipe" class="danger">Hammasini o'chirish</button>
+    </div></details>`;
+}
+
+/* ===== Sozlash maydonlari (onboarding va sozlamalar uchun umumiy) ===== */
+// Soat tanlash: brauzerning type="time" o'rniga 2 ta oddiy ro'yxat (Android'da ishonchli)
+const tf = (id, val) => { const [h, m] = String(val || "00:00").split(":").map(Number); const mm = Math.round(m / 5) * 5 % 60;
+  return `<span class="tsel"><select id="${id}-h" aria-label="Soat">${[...Array(24).keys()].map(i => `<option value="${pad(i)}" ${i === h ? "selected" : ""}>${pad(i)}</option>`).join("")}</select><b>:</b><select id="${id}-m" aria-label="Daqiqa">${[...Array(12).keys()].map(i => `<option value="${pad(i * 5)}" ${i * 5 === mm ? "selected" : ""}>${pad(i * 5)}</option>`).join("")}</select></span>`; };
+const tv = id => { const h = document.getElementById(id + "-h"), m = document.getElementById(id + "-m"); return h && m ? `${h.value}:${m.value}` : undefined; };
+const F = {
+  name: d => `<label for="f-name">Ismingiz (ixtiyoriy)<input id="f-name" value="${esc(d.name)}" autocomplete="off"></label>`,
+  dayStart: d => `<label for="f-day-h">Kuningiz soat nechada boshlanadi?${tf("f-day", d.dayStart)}</label>
+    <p class="hint">Odatda uyg'onadigan vaqtingiz. Shu soatgacha bo'lgan tun "kechagi kun"ga tegishli bo'ladi.</p>`,
+  habits: d => `<div class="list">${d.habits.map((h, i) => `
+      <div class="pair"><input id="f-h${i}" value="${esc(h.name)}" placeholder="${EXH[i % 3][0]}" aria-label="Odat ${i + 1}" autocomplete="off">
+      <input id="f-hd${i}" value="${esc(h.desc)}" placeholder="${EXH[i % 3][1]}" aria-label="Odat ${i + 1} miqdori" autocomplete="off"></div>`).join("")}</div>
+    ${d.habits.length < 3 || d.habits.some(h => !h.name) ? `<div class="chips">${SUGGEST.filter(s => !d.habits.some(h => h.name === s[0])).map(s => `<button data-sug="${esc(s[0])}|${esc(s[1])}">+ ${esc(s[0])}</button>`).join("")}${d.habits.length < 3 ? '<button data-act="hadd">+ Boshqa</button>' : ""}</div><p class="hint">Tayyor variantni bossangiz, bo'sh qatorga yoziladi.</p>` : ""}
+    <p class="hint">O'ng tomonga eng kichik miqdorni yozing: eng og'ir kunda ham bajara oladigan darajada. Odatlar shu tartibda, biridan keyin ikkinchisi keladi.</p>`,
+  goals: d => `<div class="list">${[0, 1, 2].map(i => `<input id="f-g${i}" value="${esc(d.goals[i] || "")}" placeholder="${["Kitobxon", "Dasturchi", "Sog'lom va baquvvat odam"][i]}" aria-label="Maqsad ${i + 1}" autocomplete="off">`).join("")}</div>
+    <p class="hint">Bular bosh ekranda turadi va har kuni eslatib turadi.</p>`,
+  work: d => `<label class="toggle" for="f-won"><input type="checkbox" id="f-won" ${d.work.on ? "checked" : ""}> Doimiy ish yoki o'qish vaqtim bor</label>
+    <div class="form"><label for="f-ws-h">Boshlanadi${tf("f-ws", d.work.start)}</label><label for="f-we-h">Tugaydi${tf("f-we", d.work.end)}</label></div>`,
+  deep: d => `<label for="f-dt">Nimaga chuqur e'tibor berasiz?<input id="f-dt" value="${esc(d.deep.topic)}" placeholder="Dasturlash" autocomplete="off"></label>
+    <div class="form"><label for="f-ds-h">Eng tinch vaqt${tf("f-ds", d.deep.start)}</label><label for="f-de-h">gacha${tf("f-de", d.deep.end)}</label></div>
+    <label for="f-dm">Bir sessiya qancha davom etsin?<select id="f-dm">${[25, 45, 60, 90, 120, 150].map(m => `<option value="${m}" ${d.deep.minutes === m ? "selected" : ""}>${m} daqiqa</option>`).join("")}</select></label>`,
+  rest: d => { const r = d.rest || DEFAULTS.rest;
+    return `<label for="f-rmode">Dam olish kuni<select id="f-rmode">${[["none", "Dam olish kunisiz"], ["week", "Haftaning ma'lum kunlari"], ["every", "Har necha kunda bir kun"], ["month", "Oyda bir kun"]].map(([k, n]) => `<option value="${k}" ${r.mode === k ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    ${r.mode === "week" ? `<div class="chips days">${[1, 2, 3, 4, 5, 6, 0].map(i => `<label for="f-rd${i}"><input type="checkbox" id="f-rd${i}" ${(r.days || []).includes(i) ? "checked" : ""}>${WEEKDAYS[i]}</label>`).join("")}</div>` : ""}
+    ${r.mode === "every" ? `<select id="f-rev" aria-label="Necha kunda">${[2, 3, 4, 5, 6, 7, 10, 14].map(n => `<option value="${n}" ${r.every === n ? "selected" : ""}>Har ${n} kunda bir kun</option>`).join("")}</select>` : ""}
+    ${r.mode === "month" ? `<select id="f-rmd" aria-label="Oyning kuni">${[...Array(28).keys()].map(i => `<option value="${i + 1}" ${r.monthDay === i + 1 ? "selected" : ""}>Har oyning ${i + 1}-kuni</option>`).join("")}</select>` : ""}
+    <p class="hint">Dam olish kuni odatlar majburiy emas, ilova qulflanmaydi va zanjir uzilmaydi.</p>`; },
+  review: d => `<label for="f-rv">Haftani qaysi kuni xulosa qilasiz?<select id="f-rv">${[1, 2, 3, 4, 5, 6, 0].map(i => `<option value="${i}" ${d.reviewDay === i ? "selected" : ""}>${WEEKDAYS[i]}</option>`).join("")}</select></label>`,
+};
+// Ekrandagi maydonlardan draft'ni yangilash (faqat ko'rinib turganlarini)
+function collect() {
+  const ow = document.querySelector("input[name=obw]:checked"), oc = document.getElementById("ob-wc");
+  if (oc) { const g = oc.value.trim() || (ow ? ow.value : ""); draft.goals = [g, ...(draft.goals || []).slice(1)]; }
+  const oh = document.getElementById("ob-h");
+  if (oh) { const ex = whoEx(draft); draft.habits[0] = { ...(draft.habits[0] || {}), name: oh.value.trim() || ex[1], desc: document.getElementById("ob-hd").value.trim() || ex[2] }; }
+  const v = id => { const el = document.getElementById(id); return el ? (el.type === "checkbox" ? el.checked : el.value) : undefined; };
+  if (v("f-name") !== undefined) draft.name = v("f-name").trim();
+  if (tv("f-day")) draft.dayStart = tv("f-day");
+  if (v("f-h0") !== undefined) draft.habits = draft.habits.map((h, i) => ({ ...h, name: v(`f-h${i}`).trim(), desc: v(`f-hd${i}`).trim() }));
+  if (v("f-g0") !== undefined) draft.goals = [0, 1, 2].map(i => v(`f-g${i}`).trim());
+  if (v("f-won") !== undefined) draft.work = { on: v("f-won"), start: tv("f-ws") || draft.work.start, end: tv("f-we") || draft.work.end };
+  if (v("f-dt") !== undefined) draft.deep = { topic: v("f-dt").trim() || "Chuqur ish", start: tv("f-ds"), end: tv("f-de"), minutes: Number(v("f-dm")) };
+  if (v("f-rv") !== undefined) draft.reviewDay = Number(v("f-rv"));
+  if (v("f-rmode") !== undefined) {
+    const r = { ...(draft.rest || DEFAULTS.rest), mode: v("f-rmode") };
+    if (document.getElementById("f-rd0")) r.days = [0, 1, 2, 3, 4, 5, 6].filter(i => v(`f-rd${i}`));
+    if (v("f-rev")) r.every = Number(v("f-rev"));
+    if (v("f-rmd")) r.monthDay = Number(v("f-rmd"));
+    draft.rest = r;
+  }
+}
+// Chuqur ish vaqti: 6 soatdan oshmasin va uyqu vaqtiga to'g'ri kelmasin
+function deepErr(d) {
+  const a = hm(d.deep.start), len = (hm(d.deep.end) - a + 1440) % 1440, ds = hm(d.dayStart);
+  if (!len || len > 360) return "Chuqur ish vaqti 6 soatdan oshmasin.";
+  for (let m = 0; m < len; m += 5) if (((a + m - ds + 1440) % 1440) >= 960) return "Chuqur ish vaqti uyqu vaqtiga to'g'ri kelyapti. Boshqa vaqt tanlang.";
+  return "";
+}
+function validate(d) {
+  if (!d.dayStart) return "Kun boshlanish vaqtini tanlang.";
+  if (deepErr(d)) return deepErr(d);
+  if (!d.habits.some(h => h.name)) return "Kamida bitta har kunlik odat yozing.";
+  if (d.rest && d.rest.mode === "week" && !d.rest.days.length) return "Dam olish uchun kamida bitta kunni tanlang.";
+  if (d.rest && d.rest.mode === "week" && d.rest.days.length > 3) return "Haftada 3 kundan ko'p dam olish kuni tanlab bo'lmaydi.";
+  return "";
+}
+// Draft -> sozlamalar. Odatlar: yangilari va o'chirilganlari ertadan kuchga kiradi.
+function applyDraft(d, first) {
+  const today = state.settings ? logicalDate() : null, tomorrow = today && addDays(today, 1);
+  const old = state.settings ? state.settings.habits : [];
+  let nextId = Math.max(0, ...old.map(h => h.id), ...state.logs.map(l => l.habit_id)) + 1;
+  const kept = d.habits.filter(h => h.name);
+  const habits = old.map(h => {
+    const m = kept.find(k => k.id === h.id);
+    if (m) return { ...h, name: m.name, desc: m.desc };
+    return h.until ? h : { ...h, until: today };            // o'chirildi: bugun hali kerak, ertadan emas
+  });
+  kept.filter(k => !k.id).forEach(k => habits.push({ id: nextId++, name: k.name, desc: k.desc, since: first ? "" : tomorrow }));
+  const oR = state.settings && state.settings.rest;   // "har N kunda": hisob saqlangan kundan boshlanadi
+  if (d.rest && d.rest.mode === "every" && (!oR || oR.mode !== "every" || oR.every !== d.rest.every || !d.rest.anchor)) d.rest = { ...d.rest, anchor: today || "" };
+  state.settings = { ...d, habits };
+  save();
+}
+const activeDraftHabits = () => S().habits.filter(h => !h.until).map(h => ({ id: h.id, name: h.name, desc: h.desc }));
+
+/* ===== Onboarding: har ekranda bitta savol ===== */
+const WHO = [["Kitobxon", "Kitob o'qish", "1 bet"], ["Sportchi", "Mashq", "10 ta o'tirib-turish"], ["Erta turadigan", "Budilnik bilan turish", "birinchi signalda"], ["Dasturchi", "Kod yozish", "15 daqiqa"]];
+const whoEx = d => WHO.find(w => w[0] === d.goals[0]) || ["", "Kitob o'qish", "1 bet"];
+const OB = {
+  obwho: d => `<div class="chips days">${WHO.map(w => `<label for="ob-w-${w[0]}"><input type="radio" name="obw" id="ob-w-${w[0]}" value="${w[0]}" ${d.goals[0] === w[0] ? "checked" : ""}>${w[0]}</label>`).join("")}</div>
+    <label for="ob-wc">Yoki o'zingiz yozing<input id="ob-wc" value="${WHO.some(w => w[0] === d.goals[0]) ? "" : esc(d.goals[0] || "")}" placeholder="Masalan: rassom" autocomplete="off"></label>`,
+  obhabit: d => { const [, n, q] = whoEx(d), h = d.habits[0] || {};
+    return `<div class="form"><label for="ob-h">Nima?<input id="ob-h" value="${esc(h.name || "")}" placeholder="${esc(n)}" autocomplete="off"></label><label for="ob-hd">Qancha?<input id="ob-hd" value="${esc(h.desc || "")}" placeholder="${esc(q)}" autocomplete="off"></label></div>
+    <p class="hint">Shunchalik kichik bo'lsinki, eng yomon kuningizda ham qila olasiz.</p>`; },
+  obwake: d => `${tf("f-day", d.dayStart)}<p class="hint">Shu soatgacha bo'lgan tun kechagi kunga qo'shiladi.</p>`,
+  work: d => F.work(d),
+  obdeep: d => `<label for="f-dt">Qaysi ish?<input id="f-dt" value="${esc(d.deep.topic === "Chuqur ish" ? "" : d.deep.topic)}" placeholder="Dasturlash" autocomplete="off"></label>
+    <div class="form"><label for="f-ds-h">Soat nechadan${tf("f-ds", d.deep.start)}</label><label for="f-de-h">nechagacha${tf("f-de", d.deep.end)}</label></div>
+    <label for="f-dm">Bir o'tirishda qancha?<select id="f-dm">${[25, 45, 60, 90, 120].map(m => `<option value="${m}" ${d.deep.minutes === m ? "selected" : ""}>${m} daqiqa</option>`).join("")}</select></label>`,
+  obsum: d => { const h = d.habits.find(x => x.name) || {}, dp = d.deep;
+    return `<p style="margin:0"><b>Har kuni ${d.dayStart} dan keyin:</b> ${esc(h.name || "")}${h.desc ? ` (${esc(h.desc)})` : ""}.</p>
+    <p style="margin:0">Shu bajarilmaguncha qolgan bo'limlar yopiq turadi.</p>
+    <p style="margin:0"><b>Diqqat vaqti:</b> ${dp.start}–${dp.end}, ${dp.minutes} daqiqa · ${esc(dp.topic)}</p>
+    ${d.work.on ? `<p style="margin:0"><b>Ish yoki o'qish:</b> ${d.work.start}–${d.work.end}</p>` : ""}
+    <p class="hint">Hammasini keyin Sozlamalarda o'zgartirsa bo'ladi.</p>`; },
+};
+const STEPS = [
+  ["Kim bo'lmoqchisiz?", "", "obwho"],
+  [d => `${d.goals[0] || "Shunday odam"} bo'lish uchun har kuni eng kamida nima qilasiz?`, "", "obhabit"],
+  ["Odatda soat nechada uyg'onasiz?", "", "obwake"],
+  ["Ishlaysizmi yoki o'qiysizmi? Qaysi soatlarda?", "", "work"],
+  ["Har kuni qaysi ishga diqqat bilan vaqt ajratasiz?", "", "obdeep"],
+  ["Shunday ishlaydi", "", "obsum"],
+];
+function onboarding() {
+  const [t0, sub, field] = STEPS[obStep], title = typeof t0 === "function" ? t0(draft) : t0;
+  return `<div><div class="eyebrow">Sozlash · ${obStep + 1} / ${STEPS.length}</div><h1>${title}</h1>${sub ? `<p class="muted" style="margin:6px 0 0">${sub}</p>` : ""}</div>
+    <div class="dots" aria-hidden="true">${STEPS.map((_, i) => `<span class="${i <= obStep ? "on" : ""}"></span>`).join("")}</div>
+    <div class="dwbox field">${(OB[field] || F[field])(draft)}</div>
+    <div class="err" role="alert">${esc(setMsg)}</div>
+    <div class="nav">${obStep ? `<button class="btn" data-act="obback">Orqaga</button>` : ""}
+      <button class="btn primary" data-act="obnext">${obStep === STEPS.length - 1 ? "Boshlash" : "Keyingi"}</button></div>`;
+}
+function settingsScreen() {
+  return `<div><div class="eyebrow">Life OS</div><h1>Sozlamalar</h1>
+      <p class="muted" style="margin:6px 0 0">Odatlardagi o'zgarish ertadan kuchga kiradi, shunda bugungi qulf va zanjir buzilmaydi.</p></div>
+    ${Object.keys(F).map(k => `<div class="dwbox field">${F[k](draft)}</div>`).join("")}
+    <div class="err" role="alert">${esc(setMsg)}</div>
+    <button class="btn primary" data-act="setsave">Saqlash</button>${back}
+    <details class="test"><summary>Ilova kitobning 4 qonuniga qanday amal qiladi</summary><div class="laws">
+      <div><b>1. Ko'zga tashlanadigan qilish.</b> Har bir odat qachon qilinishi yozilgan: "Uyg'ongach", "...dan keyin".</div>
+      <div><b>2. Jozibali qilish.</b> Har bir odat siz bo'lmoqchi bo'lgan odam uchun ovoz. Kun ochilganda shu eslatiladi.</div>
+      <div><b>3. Oson qilish.</b> Eng kichik miqdor ham hisob. Odat qiyin bo'lsa, ilova uni kichraytirishni taklif qiladi.</div>
+      <div><b>4. Qoniqarli qilish.</b> Zanjir, tabrik va "ikki marta qoldirma" qoidasi.</div>
+    </div></details>${testPanel()}`;
+}
+
+/* ===== Ekranlar ===== */
+function dwScreen(day, local, run) {
+  const dp = S().deep;
+  if (run) {
+    const left = remainingSec(run);
+    return `<div class="center"><div class="eyebrow">Chuqur ish · ${esc(run.topic)}</div></div>
+      <div class="ring"><svg viewBox="0 0 240 240" aria-hidden="true"><circle class="trk" cx="120" cy="120" r="110"/><circle class="arc" cx="120" cy="120" r="110" style="stroke-dashoffset:${(691.15 * left / (run.planned * 60)).toFixed(1)}"/></svg>
+        <div class="timer">${pad(Math.floor(left / 60))}:${pad(left % 60)}</div></div>
+      <p class="center muted" style="margin:0">Reja: ${run.planned} daqiqa</p>
+      <button class="btn" data-act="dwstop">Erta to'xtatish <small>qilingan vaqt baribir yoziladi</small></button>${testPanel()}`;
+  }
+  return `<div><div class="eyebrow">Life OS</div><h1>Chuqur ish</h1></div>${header(day, local)}
+    <div class="dwbox">
+      <label for="dwmin" class="eyebrow">Davomiylik</label>
+      <div class="mono" style="font-size:2rem;font-weight:600"><span id="dwlabel">${dp.minutes}</span> daqiqa</div>
+      <input type="range" id="dwmin" min="25" max="180" step="5" value="${dp.minutes}">
+      <button class="btn primary" data-act="dwstart">Boshlash <small>faqat ${esc(dp.topic)}</small></button>
+    </div>
+    <div class="state open">Bugun: <span class="mono">${fmtMin(dwMinutes(day, day))}</span></div>${back}${testPanel()}`;
+}
+function tasksScreen(day) {
+  const list = state.tasks.filter(t => t.logical_date === day).sort((a, b) => a.done - b.done).map(t =>
+    `<label class="task ${t.done ? "done" : ""}" for="task-${t.id}"><input type="checkbox" id="task-${t.id}" data-task="${t.id}" ${t.done ? "checked" : ""}><span class="t">${esc(t.title)}</span>${t.carried ? '<span class="qtag">kechadan</span>' : ""}${t.imp ? '<span class="qtag">maqsad</span>' : ""}</label>`
+  ).join("") || `<p class="muted">Bugun uchun vazifa yo'q. Birinchisini yuqorida qo'shing.</p>`;
+  return `<div><div class="eyebrow">Life OS</div><h1>Vazifalar</h1></div>${goalsBlock()}
+    <div class="dwbox">
+      <div class="form" style="grid-template-columns:1fr"><label for="tktitle">Vazifa<input id="tktitle" placeholder="Nima qilish kerak?" autocomplete="off"></label></div>
+      <div class="chk"><label for="tkimp"><input type="checkbox" id="tkimp"> Maqsadimga xizmat qiladi</label><label for="tkurg"><input type="checkbox" id="tkurg"> Bugun bitishi shart</label></div>
+      <div class="err" role="alert">${esc(tkError)}</div>
+      <button class="btn primary" data-act="tkadd">Qo'shish</button>
+    </div><div>${list}</div>${back}${testPanel()}`;
+}
+function reviewScreen(day) {
+  const [s, e] = weekRange(day);
+  const q = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  state.tasks.filter(t => t.done && t.logical_date >= s && t.logical_date <= e).forEach(t => q[quadrant(t.imp, t.urg)]++);
+  const all = q[1] + q[2] + q[3] + q[4], goal = q[1] + q[2];
+  const advice = !all ? "Bu hafta hali vazifa bajarilmagan." : q[1] > q[2] ? "Maqsadli ishlar ko'pincha oxirgi daqiqaga qolyapti. Ularni oldinroq, tinch vaqtga rejalashtiring." : q[3] + q[4] > goal ? "Vaqtning ko'p qismi maqsadga aloqasiz ishlarga ketdi." : "Yaxshi hafta: maqsadli ishlar ustun bo'ldi.";
+  return `<div><div class="eyebrow">Life OS</div><h1>Haftalik xulosa</h1></div>
+    <div class="eyebrow">${short(s)} – ${short(e)}</div>
+    <div class="pcard"><div class="big">${all} ta ish bajarildi</div><div>shundan <b>${goal} tasi</b> maqsadingizga xizmat qildi</div></div>
+    <div class="state ${goal >= q[3] + q[4] ? "open" : "locked"}">${advice}</div>
+    <div class="state open">Bu hafta bo'lmoqchi bo'lgan odamingiz uchun <b>${state.logs.filter(l => l.logical_date >= s && l.logical_date <= e).length} ta ovoz</b> berdingiz</div>
+    <div class="state open">Chuqur ish (${esc(S().deep.topic)}): <span class="mono">${fmtMin(dwMinutes(s, e))}</span></div>
+    <label for="rvnote" class="eyebrow">Hafta xulosasi</label>
+    <textarea id="rvnote" placeholder="Qaysi odat oson bo'ldi? Qaysi birini kichikroq yoki ko'zga tashlanadigan qilish kerak?">${esc(state.reviews[s] || "")}</textarea>
+    <button class="btn primary" data-act="rvsave">${rvSaved ? "Saqlandi" : "Saqlash"}</button>${back}${testPanel()}`;
+}
+
+/* ===== Router ===== */
+
+function tally(n) { if (!n) return ""; let d = ""; for (let i = 0; i < n; i++) { const g = Math.floor(i / 5), k = i % 5, x = 3 + g * 30; d += k < 4 ? `M${x + k * 5 + (i % 3 - 1) * 0.4} 3v13` : `M${x - 2} 13L${x + 18} 5`; } return `<svg class="tally" width="${Math.min(300, 30 * Math.ceil(n / 5) + 6)}" height="18" role="img" aria-label="Shu oy ${n} marta"><path d="${d}" fill="none" stroke="#2448c8" stroke-opacity=".5" stroke-width="1.3" stroke-linecap="round"/></svg>`; }
+function hero(day) {
+  const n = Math.max(1, Math.round((Date.parse(day) - Date.parse(startDay())) / 864e5) + 1), v = state.logs.length, g = S().goals.filter(Boolean);
+  const Y = d => 170 - (Math.pow(1.01, d) - 1) / (Math.pow(1.01, 365) - 1) * 150, X = d => 16 + 300 * d / 365, m = Math.min(n, 365);
+  let past = ""; for (let d = 0; d <= m; d += Math.max(1, Math.ceil(m / 12))) past += `${past ? "L" : "M"}${X(d).toFixed(1)} ${(Y(d) + (d % 3 - 1) * 0.4).toFixed(1)}`; past += `L${X(m).toFixed(1)} ${Y(m).toFixed(1)}`;
+  const px = X(m), py = Y(m), lx = Math.min(px + 40, 230), ly = Math.max(py - 50, 40);
+  return `<section class="hero"><div class="facts">${n} kun <span class="sep">·</span> <span class="mk">${v} ovoz</span></div>${g.length ? `<div class="who">men: ${esc(g.join(", "))}</div>` : ""}
+  <svg viewBox="0 0 342 196" role="img" aria-label="1% egri chizig'i: ${n}-kun">
+  <path d="M15.6 169.3 Q28.6 168.5 34.7 168.4 Q52.1 167.7 58.2 167.1 Q76.8 164.7 83.3 164.7 Q101.5 161.9 108.2 161.7 Q127.1 158.2 133.7 156.6 Q152.3 152.6 157.8 150.7 Q175.9 146.3 181.9 143.8 Q201.2 135.6 207.3 132.2 Q224.7 121.9 231.5 118.0 Q249.9 104.7 256.2 98.9 Q275.5 80.8 281.1 73.1 Q299.6 48.6 306.0 37.8 L317.0 19.2" fill="none" stroke="#1d1d1b" stroke-width="1.8" stroke-dasharray="5 6" stroke-opacity=".55" stroke-linecap="round"/>
+  <path d="${past}" fill="none" stroke="#d4f25a" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="${past}" fill="none" stroke="#1d1d1b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" rx="15" ry="10" transform="rotate(-8 ${px.toFixed(1)} ${py.toFixed(1)})" fill="none" stroke="#2448c8" stroke-width="1.6"/>
+  <path d="M${lx - 4} ${ly + 4} Q${(lx + px) / 2 - 6} ${(ly + py) / 2 + 4} ${px + 10} ${py - 12} M${px + 10} ${py - 12} l2 -9 M${px + 10} ${py - 12} l9 -2" fill="none" stroke="#2448c8" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="${lx}" y="${ly}" font-family="Kalam, cursive" font-size="18" fill="#2448c8">bugun</text>
+  <text x="252" y="22" font-family="Kalam, cursive" font-size="18" font-weight="700" fill="#1d1d1b">1 yil: 37×</text></svg></section>`;
+}
+function bnav() {
+  const t = state.tasks.filter(x => x.logical_date === logicalDate() && !x.done).length, b = (a, l) => `<button data-act="${a}" class="${view === a || (a === "home" && !["tk", "rv", "set", "dw"].includes(view)) ? "on" : ""}"><span>${l}</span></button>`;
+  return `<nav class="bnav" aria-label="Bo'limlar"><div>${b("home", "Bugun")}${b("tk", "Vazifalar" + (t ? " · " + t : ""))}${b("dw", "Chuqur ish")}${b("rv", "Xulosa")}${b("set", "Sozlamalar")}</div></nav>`;
+}
+let freshId = null;
+function render() { render0(); freshId = null; if (S() && (view === "set" || isUnlocked(logicalDate(nowLocal())))) $app.insertAdjacentHTML("beforeend", bnav()); }
+function render0() {
+  if (!S()) { draft ||= structuredClone(DEFAULTS); $app.innerHTML = onboarding(); return; }
+  const local = nowLocal(), day = logicalDate(local), run = runningSession();
+  carryTasks(day);
+  if (run && remainingSec(run) === 0) { finishSession(run, true); view = "dw"; }
+  if (view === "set") { $app.innerHTML = settingsScreen(); return; }   // qulfda ham ochiladi: o'zgarish ertadan
+  const habits = todayHabits(day), done = habits.filter(h => h.done).length;
+  if (!isUnlocked(day)) {
+    $app.innerHTML = `<div><div class="eyebrow">Focus rejim · ${human(day)}</div><h1>Avval odatlar</h1>
+        <p class="muted" style="margin:6px 0 0">Qolgan: <b>${habits.length - done} ta</b>. Ular bajarilgach kun ochiladi.</p>${missedYesterday(day) ? `<div class="state locked" style="margin-top:10px">Kecha: qoldirildi · bugun ham qolsa, zanjir uziladi</div>` : ""}</div>
+      <div class="progress" aria-hidden="true"><div style="width:${habits.length ? done / habits.length * 100 : 0}%"></div></div>
+      <div class="habits">${habitButtons(day, true)}</div>${streakBlock(day)}${header(day, local)}
+      <button class="btn" data-act="set">Sozlamalar</button>${testPanel()}`;
+    return;
+  }
+  if (run || view === "dw") { $app.innerHTML = dwScreen(day, local, run); return; }
+  if (view === "tk") { $app.innerHTML = tasksScreen(day); return; }
+  if (view === "rv") { $app.innerHTML = reviewScreen(day); return; }
+  const rvToday = wdOf(day) === S().reviewDay;
+  $app.innerHTML = `${hero(day)}${header(day, local)}
+    ${celebrate(day)}${nextCard(day, local)}${coachCard(day)}
+    <div class="actions">
+      <button class="btn" data-act="tk">Vazifalar ${(n => n ? `<small>${n} ta qoldi</small>` : "")(state.tasks.filter(t => t.logical_date === day && !t.done).length)}</button>
+      <button class="btn ${rvToday ? "primary" : ""}" data-act="rv">Haftalik xulosa <small>${rvToday ? "bugun" : WEEKDAYS[S().reviewDay]}</small></button>
+      <button class="btn" data-act="set">Sozlamalar</button>
+    </div>${streakBlock(day)}${goalsBlock()}`;
+}
+// Odatlar endi bajarilganda bir marta chiqadigan tabrik
+const IDEAS = [
+  ["Har kuni 1% yaxshilaning", "Bugun sezilmaydigan kichik qadam bir yilda katta o'zgarishga aylanadi."],
+  ["Tizim maqsaddan muhim", "Natijani maqsad emas, har kuni takrorlanadigan odatlar beradi."],
+  ["Har bir odat bitta ovoz", "Bajarilgan har bir odat siz bo'lmoqchi bo'lgan odam uchun berilgan ovozdir."],
+  ["Ikki marta qoldirmang", "Bitta qoldirish tasodif. Ketma-ket ikkitasi esa yangi odatning boshlanishi."],
+  ["Boshlash mukammallikdan muhim", "Eng kichik miqdor ham hisob. Avval kelishni o'rganing, keyin ko'paytirasiz."],
+  ["Ko'zga tashlanadigan qiling", "Kitobni yostiq ustiga, sport kiyimini eshik oldiga qo'ying."],
+  ["Yomon odatni ko'rinmas qiling", "Chalg'itadigan narsani boshqa xonada qoldiring. Ko'rmagan narsa kam tortadi."],
+  ["Yangi odatni eskisiga ulang", "\"Shundan keyin buni qilaman\" degan bog'lanish odatni eslab qolishni osonlashtiradi."],
+  ["Natija kechikib keladi", "Muz 0 darajada birdan eriydi, lekin unga qadar har bir daraja hisoblangan edi."],
+  ["Muhit irodadan kuchli", "Kerakli narsani qo'l yetadigan joyga, keraksizini uzoqroqqa qo'ying."],
+  ["Yoqimli narsa bilan bog'lang", "Sevimli musiqani faqat sport paytida tinglang. Qiyin ish kutiladigan bo'ladi."],
+  ["Zerikkanda ham davom eting", "Kayfiyat kutmasdan bajarish oddiy odamni ustadan ajratib turadi."],
+  ["Belgilash o'zi mukofot", "Zanjirni uzmaslik istagi ertangi kun uchun kuch beradi."],
+  ["Kichik g'alaba ishonch beradi", "Har kungi kichik g'alaba katta o'zgarishlarga ishonch uyg'otadi."],
+];
+const ideaCard = day => { const [t, x] = IDEAS[Math.floor(Date.parse(day) / 864e5) % IDEAS.length]; return `<div class="idea"><div class="eyebrow">Bugungi g'oya · Atom odatlari</div><b>${t}</b><div class="muted">${x}</div></div>`; };
+
+// Avtomatik murabbiy: odat oson bo'lsa oshirishni, qiyin bo'lsa kichraytirishni taklif qiladi
+const startDay = () => state.logs.reduce((m, l) => l.logical_date < m ? l.logical_date : m, logicalDate());
+function coachCard(day) {
+  const seen = state.coachSeen || {}, fresh = k => !seen[k] || addDays(seen[k], 7) <= day, sd = startDay();
+  const box = (k, t, x) => `<div class="coach"><div class="eyebrow">Maslahat</div><b>${t}</b><div class="muted">${x}</div>
+    <div class="nav" style="position:static;padding:0;background:none"><button class="btn" data-act="set">Sozlamalar</button><button class="btn" data-coach="${k}">Tushunarli</button></div></div>`;
+  for (const h of requiredOn(day)) {
+    let streak = true; for (let i = 1, k = 0; k < 14 && i < 60; i++) { const d = addDays(day, -i); if (isRest(d)) continue; k++; if (!isDone(h.id, d)) { streak = false; break; } }
+    if (streak && fresh(`g${h.id}`)) return box(`g${h.id}`, `${esc(h.name)} ikki haftadan beri har kuni bajarilyapti`, "Odat endi mustahkam. Xohlasangiz, miqdorini biroz oshiring: sekin, deyarli sezilmas qadam bilan.");
+  }
+  for (const h of requiredOn(day)) {
+    let miss = 0; for (let i = 1; i <= 7; i++) { const d = addDays(day, -i); if (d >= sd && !isRest(d) && (!h.since || h.since <= d) && !isDone(h.id, d)) miss++; }
+    if (miss >= 3 && fresh(`s${h.id}`)) return box(`s${h.id}`, `${esc(h.name)} qiyin bo'lyapti`, "Uni shunchalik kichik qilingki, \"yo'q\" deyish qiyin bo'lsin. Masalan, 2 daqiqalik variant.");
+  }
+  return "";
+}
+function carryTasks(day) { let ch = false; state.tasks.forEach(t => { if (!t.done && t.logical_date < day) { t.logical_date = day; t.carried = true; ch = true; } }); if (ch) save(); }
+function celebrate(day) { if (!justUnlocked) return ""; justUnlocked = false; const g = S().goals.filter(Boolean); return `<div class="unlock" role="status">Kun ochildi${g.length ? `<br><span style="font-size:.9rem;font-weight:600">Bugun yana bir bor ${esc(g.join(", "))} kabi harakat qildingiz</span>` : ""}</div>`; }
+// Bosh ekrandagi yagona asosiy harakat: hozir nima qilish kerak
+function nextCard(day, local) {
+  const dp = S().deep, w = S().work, ds = hm(S().dayStart), now = local.getUTCHours() * 60 + local.getUTCMinutes();
+  const inR = (a, b) => { a = (a + 1440) % 1440; b = (b + 1440) % 1440; return a <= b ? now >= a && now < b : now >= a || now < b; };
+  const topic = esc(dp.topic || "Chuqur ish"), doneDw = dwMinutes(day, day) > 0;
+  const open = state.tasks.filter(t => t.logical_date === day && !t.done).length, taskSub = open ? `${open} ta vazifa kutmoqda` : "";
+  const card = (eb, title, sub, btn = "") => `<div class="next"><div class="eyebrow">${eb}</div><div class="big">${title}</div>${sub ? `<div class="muted">${sub}</div>` : ""}${btn}</div>`;
+  if (isRest(day)) return card("Bugun", "Dam olish kuni", "Odatlar bugun majburiy emas, zanjir uzilmaydi. Yaxshi dam oling.");
+  if (wdOf(day) === S().reviewDay && !state.reviews[weekRange(day)[0]]) return card("Bugun", "Haftalik xulosa kuni", "Hafta qanday o'tganini ko'ring", `<button class="btn primary" data-act="rv">Ochish</button>`);
+  if (!doneDw && inR(hm(dp.start), hm(dp.end))) return card("Hozir", `${topic} vaqti`, `${dp.minutes} daqiqa, telefon chetda`, `<button class="btn primary" data-act="dw">Boshlash</button>`);
+  if (inR(ds - 480, ds)) return card("Hozir", "Uyqu vaqti", `Uyg'onish: ${S().dayStart}. Yaxshi dam oling.`);
+  if (inR(ds - 540, ds - 480)) return card("Tez orada", "Uyquga tayyorlaning", "Ekranni chetga qo'ying, ertangi ishlarni yozib qo'ying", `<button class="btn" data-act="tk">Vazifalar</button>`);
+  if (w.on && inR(hm(w.start), hm(w.end))) return card("Hozir", "Ish vaqti", doneDw ? taskSub : `${topic}: ${dp.start} da`);
+  if (doneDw) return card("Bugun", `${topic} bajarildi`, taskSub || "Bugungi asosiy ish qilindi", open ? `<button class="btn" data-act="tk">Vazifalar</button>` : "");
+  return card("Keyingi qadam", `${dp.start} da ${topic}`, taskSub, `<button class="btn primary" data-act="dw">Hozir boshlash</button>`);
+}
+
+$app.addEventListener("click", e => {
+  const a = e.target.closest("[data-act]"), act = a && a.dataset.act;
+  const sug = e.target.closest("[data-sug]");
+  // --- sozlash ---
+  if (sug || act === "hadd") {
+    collect();
+    const empty = draft.habits.findIndex(h => !h.name);
+    const [n, d] = sug ? sug.dataset.sug.split("|") : ["", ""];
+    if (sug && empty >= 0) draft.habits[empty] = { ...draft.habits[empty], name: n, desc: d };
+    else if (draft.habits.length < 3) draft.habits.push({ name: n, desc: d });
+    return render();
+  }
+  if (act === "obnext") {
+    collect(); setMsg = "";
+    if (STEPS[obStep][2] === "obwho" && !draft.goals[0]) { setMsg = "Bittasini tanlang yoki o'zingiz yozing."; return render(); }
+    if (STEPS[obStep][2] === "obdeep" && deepErr(draft)) { setMsg = deepErr(draft); return render(); }
+    if (obStep < STEPS.length - 1) { obStep++; return render(); }
+    const err = validate(draft); if (err) { setMsg = err; return render(); }
+    applyDraft(draft, true); draft = null; view = "home"; return render();
+  }
+  if (act === "obback") { collect(); obStep--; setMsg = ""; return render(); }
+  if (act === "set") { draft = { ...structuredClone(S()), habits: activeDraftHabits() }; setMsg = ""; view = "set"; return render(); }
+  if (act === "setsave") {
+    collect(); const err = validate(draft); if (err) { setMsg = err; return render(); }
+    applyDraft(draft, false); draft = null; view = "home"; return render();
+  }
+  if (!S()) return;
+  const day = logicalDate();
+  const co = e.target.closest("[data-coach]");
+  if (co) { (state.coachSeen ||= {})[co.dataset.coach] = day; save(); return render(); }
+  // --- odatlar ---
+  const h = e.target.closest(".habit");
+  if (h && !h.disabled) { const id = Number(h.dataset.id), was = isUnlocked(day); if (isDone(id, day)) unmark(id, day); else { markDone(id, day); freshId = id; try { navigator.vibrate && navigator.vibrate(12); } catch (x) {} } if (!was && isUnlocked(day)) justUnlocked = true; return render(); }
+  const sh = e.target.closest("[data-shift]");
+  if (sh) { state.offsetMin = sh.dataset.shift === "reset" ? 0 : state.offsetMin + Number(sh.dataset.shift); return render(); }
+  if (act === "home") { view = "home"; draft = null; return render(); }
+  if (act === "dw" || act === "tk") { view = act; return render(); }
+  if (act === "rv") { view = "rv"; rvSaved = false; return render(); }
+  if (act === "dwstart") { startSession(Number(document.getElementById("dwmin").value)); return render(); }
+  if (act === "dwstop") { const r = runningSession(); if (r) finishSession(r, false); view = "dw"; return render(); }
+  if (act === "tkadd") {
+    const title = document.getElementById("tktitle").value.trim();
+    if (!title) { tkError = "Vazifa nomi bo'sh bo'lmasin"; return render(); }
+    state.tasks.push({ id: Date.now(), title, imp: document.getElementById("tkimp").checked, urg: document.getElementById("tkurg").checked, logical_date: day, done: false });
+    tkError = ""; save(); return render();
+  }
+  if (act === "rvsave") { state.reviews[weekRange(day)[0]] = document.getElementById("rvnote").value.trim(); rvSaved = true; save(); return render(); }
+  if (act === "fill") { for (let i = 1; i <= 3; i++) requiredOn(addDays(day, -i)).forEach(x => markDone(x.id, addDays(day, -i))); return render(); }
+  if (act === "wipe") {
+    if (!wipeArmed) { wipeArmed = true; a.textContent = "Tasdiqlash uchun yana bosing"; setTimeout(() => { wipeArmed = false; render(); }, 3000); return; }
+    wipeArmed = false; state = { logs: [], offsetMin: 0, sessions: [], tasks: [], reviews: {}, settings: null }; obStep = 0; draft = null; save(); return render();
+  }
+});
+$app.addEventListener("change", e => {
+  if (e.target.id === "f-rmode") { collect(); return render(); }
+  if (!e.target.dataset.task) return;
+  const t = state.tasks.find(x => x.id === Number(e.target.dataset.task));
+  if (t) { t.done = e.target.checked; save(); render(); }
+});
+$app.addEventListener("input", e => { if (e.target.id === "dwmin") document.getElementById("dwlabel").textContent = e.target.value; });
+$app.addEventListener("toggle", e => { if (e.target.id === "testpanel") sessionOpen = e.target.open; }, true);
+
+// Buzilgan eski qiymatni avtomatik tuzatish: tugash = boshlanish + sessiya davomiyligi
+if (S() && deepErr(S())) { S().deep.end = hmStr(hm(S().deep.start) + (S().deep.minutes || 90)); save(); }
+render();
+let ticks = 0;
+setInterval(() => {
+  ticks++;
+  if (wipeArmed || !S() || view === "set" || drag) return;
+  if (document.activeElement && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (runningSession() || ticks % 30 === 0) render();
+}, 1000);
+</script>
+
+</body></html>
